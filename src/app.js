@@ -13,6 +13,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.send('✅ 백엔드 서버가 정상적으로 작동 중입니다!');
+});
+
 // 라우터 등록
 app.use('/products', productRoutes);
 app.use('/upload', uploadRoutes);
