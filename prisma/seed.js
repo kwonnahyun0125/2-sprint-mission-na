@@ -12,7 +12,8 @@ async function main() {
     data: {
       email: "seed@example.com",
       nickname: "seeduser",
-      password: hashed,        
+      password: hashed,
+      image: '/uploads/혜원style1-1751108365297.png',
     },
   });
 
