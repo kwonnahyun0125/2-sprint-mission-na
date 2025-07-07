@@ -1,3 +1,4 @@
+
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient();
 
@@ -13,6 +14,7 @@ export const createProduct = async (req, res, next) => {
         tags,
         imageUrl,
         ownerId: req.user.id,
+
       },
     });
     res.status(201).json(newProduct);

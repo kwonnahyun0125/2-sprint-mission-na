@@ -50,12 +50,13 @@ export const getArticleById = async (req, res, next) => {
     
     // articleLikes 필드 제거
     const { articleLikes, ...rest } = article;
-
+    
     return res.status(200).json({ ...rest, isLiked, likeCount });
   } catch (err) {
     next(err);
   }
 };
+
 
 // 3. 게시글 전체 목록 조회
 export const getArticleList = async (req, res, next) => {
@@ -81,6 +82,7 @@ export const getArticleList = async (req, res, next) => {
     next(err);
   }
 };
+
 
 // 4. 게시글 수정
 export const updateArticle = async (req, res, next) => {

@@ -23,6 +23,7 @@ export const validateProduct = (req, res, next) => {
   next();
 };
 
+
 // 게시글 검증
 export const validateArticle = (req, res, next) => {
   const { title, content } = req.body;
@@ -43,6 +44,6 @@ export const validateComment = (req, res, next) => {
   if (!content || typeof content !== 'string') {
     return res.status(400).json({ error: '댓글 내용이 유효하지 않습니다.' });
   }
-
   next();
 };
+

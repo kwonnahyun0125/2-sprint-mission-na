@@ -6,8 +6,7 @@ export const createProductComment = async (req, res, next) => {
   try {
     const { content } = req.body;
     const { productId } = req.params;
-
-    
+ 
     if (!content) return res.status(400).json({error: "댓글 내용을 입력하세요."});
     const comment = await prisma.comment.create({
       data: {
@@ -101,7 +100,6 @@ export const updateComment = async (req, res, next) => {
     const { commentId } = req.params;
 
     if (!content) return res.status(400).json({ error: "댓글 내용을 입력하세요." });
-
     const updated = await prisma.comment.update({
       where: { id: parseInt(commentId) },
       data: { content },

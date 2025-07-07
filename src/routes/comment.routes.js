@@ -26,6 +26,7 @@ router.route('/products/:productId/comments')
 // 게시글 댓글
 router.route('/articles/:articleId/comments')
   .get(getArticleComments)
+
   .post(
     authenticate,
     validateComment,
