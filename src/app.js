@@ -1,33 +1,33 @@
 import express from 'express';
 import cors from 'cors';
-import productRoutes from './routes/product.routes.js';
-import uploadRoutes from './routes/upload.routes.js';
+import cookieParser from 'cookie-parser';
+
+import productRoutes  from './routes/product.routes.js';
+import articleRoutes  from './routes/article.routes.js';
+import commentRoutes  from './routes/comment.routes.js';
+import uploadRoutes   from './routes/upload.routes.js';     
+import authRoutes     from './routes/auth.routes.js';       
+import userRoutes from './routes/user.routes.js';
+
 import { errorHandler } from './utils/errorHandler.js';
-import articleRoutes from './routes/article.routes.js';
-import commentRoutes from './routes/comment.routes.js';
 
-console.log('upload 라우터 불러옴');
-
-const app = express(); 
+const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
-app.get('/', (req, res) => {
-  res.send('✅ 백엔드 서버가 정상적으로 작동 중입니다!');
-});
+// 헬스체크
+app.get('/', (_, res) => res.send('서버 OK'));
 
-// 라우터 등록
+// 주요 라우터
+app.use('/auth',     authRoutes);      // 새 인증 API
+app.use('/users', userRoutes);
 app.use('/products', productRoutes);
-app.use('/upload', uploadRoutes);
-app.use('/uploads', express.static('uploads'));
 app.use('/articles', articleRoutes);
-app.use(commentRoutes);
-
-console.log('upload 라우터 연결 완료');
-console.log('upload router mounted at /upload');
-console.log('서버 시작됨');
-console.log('upload.routes 연결됨');
+app.use('/upload',   uploadRoutes);
+app.use('/uploads',  express.static('uploads'));
+app.use(commentRoutes);               
 
 // 공통 에러 핸들러
 app.use(errorHandler);
