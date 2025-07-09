@@ -6,13 +6,13 @@ import {
   getArticleComments,
   updateComment,
   deleteComment,
-} from '../controllers/comment.controller.js';
+} from '../controllers/comment.controller';
 
-import { validateComment } from '../middlewares/validation.js';
-import { authenticate } from '../middlewares/auth.js';
-import { requireOwnership } from '../middlewares/ownership.js';
+import { validateComment } from '../middlewares/validation';
+import { authenticate } from '../middlewares/auth';
+import { requireOwnership } from '../middlewares/ownership';
 
-const router = express.Router();
+const router: express.Router = express.Router();
 
 // 상품 댓글
 router.route('/products/:productId/comments')

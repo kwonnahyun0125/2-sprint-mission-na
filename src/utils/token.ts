@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
@@ -10,36 +10,38 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'dev-refresh-se
 const ACCESS_TOKEN_EXPIRES = '1h';
 const REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 7; // 7일(초)
 
-// AccessToken 발급 
-export function signAccessToken(payload) {
+// AccessToken 발급
+export function signAccessToken(payload: object): string {
   return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES });
 }
 
-// RefreshToken 발급 
-export function signRefreshToken(payload) {
-  // 보안 위해 랜덤 문자열
+// RefreshToken 발급
+export function signRefreshToken(payload: object): string {
   const raw = crypto.randomBytes(64).toString('hex');
-  
   return jwt.sign({ ...payload, jti: raw }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES });
 }
 
-// AccessToken 검증 
-export function verifyAccess(token) {
+// AccessToken 검증
+export function verifyAccess(token: string): string | JwtPayload {
   return jwt.verify(token, ACCESS_TOKEN_SECRET);
 }
 
-//RefreshToken 검증 
-export function verifyRefresh(token) {
+// RefreshToken 검증
+export function verifyRefresh(token: string): string | JwtPayload {
   return jwt.verify(token, REFRESH_TOKEN_SECRET);
 }
 
-// RefreshToken DB 저장 
-export async function persistRefreshToken(userId, refreshToken) {
+// RefreshToken DB 저장
+export async function persistRefreshToken(userId: number, refreshToken: string): Promise<void> {
   const tokenHash = await bcrypt.hash(refreshToken, 12);
-  const { exp } = jwt.decode(refreshToken); // 만료 시간(초단위)
-  const expiresAt = new Date(exp * 1000);
 
-  
+  const decoded = jwt.decode(refreshToken) as JwtPayload | null;
+  if (!decoded || typeof decoded.exp !== 'number') {
+    throw new Error('Invalid refresh token');
+  }
+
+  const expiresAt = new Date(decoded.exp * 1000);
+
   await prisma.refreshToken.create({
     data: {
       userId,
@@ -49,10 +51,10 @@ export async function persistRefreshToken(userId, refreshToken) {
   });
 }
 
-// RefreshToken 폐기 
-export async function revokeRefreshToken(refreshToken) {
-  // 모든 저장된 해시와 비교해서 일치하는 row 삭제
-  const tokens = await prisma.refreshToken.findMany({});
+// RefreshToken 폐기
+export async function revokeRefreshToken(refreshToken: string): Promise<boolean> {
+  const tokens = await prisma.refreshToken.findMany();
+
   for (const t of tokens) {
     const match = await bcrypt.compare(refreshToken, t.tokenHash);
     if (match) {
@@ -60,7 +62,6 @@ export async function revokeRefreshToken(refreshToken) {
       return true;
     }
   }
+
   return false;
 }
-
-

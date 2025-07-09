@@ -6,13 +6,14 @@ import {
   deleteArticle,
   getArticleList,
   likeArticle,
-  unlikeArticle
-} from '../controllers/article.controller.js';
-import { validateArticle } from '../middlewares/validation.js';
-import { authenticate } from '../middlewares/auth.js';
-import { requireOwnership } from '../middlewares/ownership.js';
+  unlikeArticle,
+  getArticleLikes,
+} from '../controllers/article.controller';
+import { validateArticle } from '../middlewares/validation';
+import { authenticate } from '../middlewares/auth';
+import { requireOwnership } from '../middlewares/ownership';
 
-const router = express.Router();
+const router: express.Router = express.Router();
 
 // 게시글 목록 조회, 생성
 router.route('/')
@@ -25,8 +26,12 @@ router.route('/:id')
   .patch(authenticate, requireOwnership('article'), updateArticle)
   .delete(authenticate, requireOwnership('article'), deleteArticle);
 
-// 좋아요/좋아요 취소
+// 좋아요 / 좋아요 취소
 router.post('/:id/like', authenticate, likeArticle);
 router.delete('/:id/like', authenticate, unlikeArticle);
 
+// 게시글 좋아요 목록 조회
+router.get('/:id/likes', authenticate, getArticleLikes);
+
 export default router;
+

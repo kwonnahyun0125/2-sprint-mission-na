@@ -1,23 +1,34 @@
-// src/routes/auth.routes.js
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
-import cookieParser from 'cookie-parser';
+import { PrismaClient, Prisma } from '@prisma/client';
 import {
   signAccessToken,
   signRefreshToken,
   persistRefreshToken,
   verifyRefresh,
   revokeRefreshToken,
-} from '../utils/token.js';
+} from '../utils/token';
 
 const prisma = new PrismaClient();
-const router = express.Router();
 
-// cookie-parser는 app.js 등 엔트리에서 app.use(cookieParser())로 미리 적용되어야 함
+const router: express.Router = express.Router();
 
-function checkCredentials(req, res, next) {
-  const { email, password, nickname } = req.body;
+// Request body 타입 정의
+interface RegisterRequestBody {
+  email: string;
+  password: string;
+  nickname: string;
+  image?: string;
+}
+
+interface LoginRequestBody {
+  email: string;
+  password: string;
+}
+
+// 공통 유효성 검사 미들웨어
+function checkCredentials(req: Request, res: Response, next: NextFunction) {
+  const { email, password, nickname }: RegisterRequestBody = req.body;
   if (!email || !password || (req.path === '/register' && !nickname)) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
@@ -25,18 +36,28 @@ function checkCredentials(req, res, next) {
 }
 
 // 회원가입
-router.post('/register', checkCredentials, async (req, res, next) => {
+router.post('/register', checkCredentials, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, nickname, password } = req.body;
+    const { email, nickname, password, image }: RegisterRequestBody = req.body;
     const hashed = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
-      data: { email, nickname, password: hashed, imageurl },
+      data: {
+        email,
+        nickname,
+        password: hashed,
+        image: image ?? null,
+      },
       select: { id: true, email: true, nickname: true },
     });
+
     return res.status(201).json(user);
   } catch (err) {
-    if (err.code === 'P2002' || (err.meta && err.meta.target && err.meta.target.includes('email'))) {
+    const e = err as Prisma.PrismaClientKnownRequestError;
+    if (
+      e.code === 'P2002' ||
+      (e.meta && typeof e.meta === 'object' && 'target' in e.meta && (e.meta.target as string[]).includes('email'))
+    ) {
       return res.status(409).json({ message: 'Email or nickname already exists' });
     }
     next(err);
@@ -44,9 +65,9 @@ router.post('/register', checkCredentials, async (req, res, next) => {
 });
 
 // 로그인
-router.post('/login', checkCredentials, async (req, res, next) => {
+router.post('/login', checkCredentials, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.body;
+    const { email, password }: LoginRequestBody = req.body;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
@@ -58,34 +79,37 @@ router.post('/login', checkCredentials, async (req, res, next) => {
     const refreshToken = signRefreshToken({ id: user.id });
     await persistRefreshToken(user.id, refreshToken);
 
-    // httpOnly 쿠키로 refreshToken 저장
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
-    // 프론트에는 accessToken만 내려줌
+
     return res.json({ accessToken });
   } catch (err) {
     next(err);
   }
 });
 
-// Access Token 재발급
-router.post('/token', async (req, res) => {
-  // 쿠키에서 refreshToken 추출
-  const refreshToken = req.cookies.refreshToken;
+// Access Token 재발급 (Promise.any 제거)
+router.post('/token', async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
   if (!refreshToken) return res.status(400).json({ message: 'Missing refresh token' });
 
   try {
-    const payload = verifyRefresh(refreshToken);
+    const payload = verifyRefresh(refreshToken) as { id: number };
 
-    // 토큰 DB 저장 해시와 비교
     const stored = await prisma.refreshToken.findMany({ where: { userId: payload.id } });
-    const stillValid = await Promise.any(
-      stored.map(r => bcrypt.compare(refreshToken, r.tokenHash))
-    ).catch(() => false);
+
+    const results = await Promise.allSettled(
+      stored.map((r) => bcrypt.compare(refreshToken, r.tokenHash))
+    );
+
+    const stillValid = results.some(
+      (result): result is PromiseFulfilledResult<boolean> =>
+        result.status === 'fulfilled' && result.value === true
+    );
 
     if (!stillValid) throw new Error('Revoked or not found');
 
@@ -97,16 +121,19 @@ router.post('/token', async (req, res) => {
 });
 
 // 로그아웃
-router.post('/logout', async (req, res, next) => {
+router.post('/logout', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) await revokeRefreshToken(refreshToken);
+    const refreshToken = req.cookies?.refreshToken;
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken);
+    }
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
+
     res.status(204).end();
   } catch (err) {
     next(err);
