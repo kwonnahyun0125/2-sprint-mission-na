@@ -1,4 +1,3 @@
-
 // This is your Prisma schema file,Add commentMore actions
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -7,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
@@ -44,6 +44,7 @@ model Product {
 
   comments Comment[]
   likes    ProductLike[]
+}
 
 model Article {
   id        Int      @id @default(autoincrement())
@@ -105,3 +106,5 @@ model RefreshToken {
 
   @@unique([userId, tokenHash])
 }
+
+
