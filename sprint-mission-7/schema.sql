@@ -1,0 +1,93 @@
+-- 사용자 테이블
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL CHECK (char_length(password_hash) >= 8),
+  nickname VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 상품 테이블
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  price INTEGER NOT NULL CHECK (price >= 0),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_deleted BOOLEAN DEFAULT FALSE
+);
+
+-- 상품 이미지 테이블
+CREATE TABLE product_images (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL
+);
+
+-- 태그 테이블
+CREATE TABLE tags (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name VARCHAR(50) UNIQUE NOT NULL
+);
+
+-- 상품 태그 테이블
+CREATE TABLE product_tags (
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (product_id, tag_id)
+);
+
+-- 상품 좋아요 테이블
+CREATE TABLE likes (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  UNIQUE(user_id, product_id)
+);
+
+-- 상품 문의댓글 테이블
+CREATE TABLE comments (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  );
+
+-- 자유게시판 테이블
+CREATE TABLE articles (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 자유게시판 이미지 테이블
+CREATE TABLE article_images (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL
+);
+
+-- 자유게시판 좋아요 테이블
+CREATE TABLE article_likes (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  UNIQUE(user_id, article_id)
+);
+
+-- 자유게시판 문의댓글 테이블
+CREATE TABLE article_comments (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
