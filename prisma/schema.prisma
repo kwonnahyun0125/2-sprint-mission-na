@@ -28,6 +28,7 @@ model User {
   productLikes  ProductLike[]
   articleLikes  ArticleLike[]
   refreshTokens RefreshToken[]
+  notifications Notification[]
 }
 
 model Product {
@@ -42,8 +43,9 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  comments Comment[]
-  likes    ProductLike[]
+  comments      Comment[]
+  likes         ProductLike[]
+  notifications Notification[]
 }
 
 model Article {
@@ -56,8 +58,9 @@ model Article {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  comments Comment[]
-  likes    ArticleLike[]
+  comments      Comment[]
+  likes         ArticleLike[]
+  notifications Notification[]
 }
 
 model Comment {
@@ -72,6 +75,8 @@ model Comment {
   productId Int?
   article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
   articleId Int?
+
+  notifications Notification[]
 }
 
 model ProductLike {
@@ -107,4 +112,31 @@ model RefreshToken {
   @@unique([userId, tokenHash])
 }
 
+enum NotificationType {
+  PRICE_CHANGED
+  NEW_COMMENT
+}
 
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  title     String
+  message   String
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  productId Int?
+  articleId Int?
+  commentId Int?
+
+  user    User     @relation(fields: [userId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+  article Article? @relation(fields: [articleId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+
+  @@index([userId, readAt])
+  @@index([productId])
+  @@index([articleId])
+  @@index([commentId])
+}

@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { NotificationType, PrismaClient } from '@prisma/client';
 import { CreateCommentInput, UpdateCommentInput } from '../dtos/comment.dto';
+import { createAndPushNotification } from './notification.service';
 
 const prisma = new PrismaClient();
 
@@ -26,14 +27,39 @@ export class CommentService {
     authorId: number,
     data: CreateCommentInput
   ) {
-    return prisma.comment.create({
-      data: {
-        ...data,
-        authorId,
-        articleId,
-        productId: null,
-      },
+    // 트랜잭션으로 게시글 검증 + 댓글 생성
+    const { article, comment } = await prisma.$transaction(async (tx) => {
+      const article = await tx.article.findUnique({
+        where: { id: articleId },
+        select: { id: true, title: true, authorId: true },
+      });
+      if (!article) throw new Error('Article not found');
+
+      const comment = await tx.comment.create({
+        data: {
+          ...data,
+          authorId,       // 댓글 작성자
+          articleId,
+          productId: null,
+        },
+      });
+
+      return { article, comment };
     });
+
+    // 알림 생성성
+    if (article.authorId !== authorId) {
+      await createAndPushNotification({
+        userId: article.authorId,                   // 글 작성자에게 보냄
+        type: NotificationType.NEW_COMMENT,
+        title: '새 댓글이 달렸어요',
+        message: `내 게시글 "${article.title}"에 새 댓글이 달렸습니다.`,        
+        articleId,
+        commentId: comment.id,
+      });
+    }
+
+    return comment;
   }
 
   // 상품 댓글 목록
