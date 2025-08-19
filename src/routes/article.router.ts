@@ -34,4 +34,3 @@ router.delete('/:id/like', authenticate, unlikeArticle);
 router.get('/:id/likes', authenticate, getArticleLikes);
 
 export default router;
-
