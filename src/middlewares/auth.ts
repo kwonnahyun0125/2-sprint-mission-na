@@ -31,4 +31,18 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 }
-export { authenticate as authMiddleware };
+export function optionalAuthenticate(req: Request, _res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (!header) return next();
+
+  const [scheme, token] = header.split(' ');
+  if (scheme !== 'Bearer' || !token) return next();
+
+  try {
+    const payload = verifyAccess(token) as TokenPayload;
+    req.user = payload;
+  } catch {
+    // 토큰이 잘못됐어도 공개 조회는 막지 않음
+  }
+  next();
+}

@@ -9,28 +9,27 @@ import {
   likeProduct,
   unlikeProduct,
 } from '../controllers/product.controller';
+import { authenticate, optionalAuthenticate } from '../middlewares/auth';
 import { validateProduct } from '../middlewares/validation';
-import { authenticate } from '../middlewares/auth';
 import { requireOwnership } from '../middlewares/ownership';
 
 const router: express.Router = express.Router();
+// 공개 API
+router.get('/', getProductList);
+router.get('/:id', optionalAuthenticate, getProductById);
+router.get('/:productId/likes', getProductLikes);
 
-// 상품 목록 조회, 생성
-router.route('/')
-  .get(getProductList)
-  .post(authenticate, validateProduct, createProduct);
+router.use(authenticate);
 
-// 상품 상세 조회, 수정, 삭제
-router.route('/:id')
-  .get(authenticate, getProductById)
-  .patch(authenticate, requireOwnership('product'), updateProduct)
-  .delete(authenticate, requireOwnership('product'), deleteProduct);
+// 생성
+router.post('/', validateProduct, createProduct);
 
-// 상품 좋아요/취소
-router.post('/:id/like', authenticate, likeProduct);
-router.delete('/:id/like', authenticate, unlikeProduct);
+// 수정/삭제
+router.patch('/:id', requireOwnership('product'), updateProduct);
+router.delete('/:id', requireOwnership('product'), deleteProduct);
 
-// 상품 좋아요 목록 조회
-router.get('/:id/likes', authenticate, getProductLikes);
+// 좋아요/취소
+router.post('/:id/like', likeProduct);
+router.delete('/:id/like', unlikeProduct);
 
 export default router;
