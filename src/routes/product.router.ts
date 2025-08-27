@@ -5,14 +5,15 @@ import {
   updateProduct,
   deleteProduct,
   getProductList,
+  getProductLikes,
   likeProduct,
   unlikeProduct,
-} from '../controllers/product.controller.js';
-import { validateProduct } from '../middlewares/validation.js';
-import { authenticate } from '../middlewares/auth.js';
-import { requireOwnership } from '../middlewares/ownership.js';
+} from '../controllers/product.controller';
+import { validateProduct } from '../middlewares/validation';
+import { authenticate } from '../middlewares/auth';
+import { requireOwnership } from '../middlewares/ownership';
 
-const router = express.Router();
+const router: express.Router = express.Router();
 
 // 상품 목록 조회, 생성
 router.route('/')
@@ -28,5 +29,8 @@ router.route('/:id')
 // 상품 좋아요/취소
 router.post('/:id/like', authenticate, likeProduct);
 router.delete('/:id/like', authenticate, unlikeProduct);
+
+// 상품 좋아요 목록 조회
+router.get('/:id/likes', authenticate, getProductLikes);
 
 export default router;

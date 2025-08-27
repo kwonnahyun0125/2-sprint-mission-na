@@ -2,14 +2,16 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-import productRoutes from './routes/product.routes';
-import articleRoutes from './routes/article.routes';
-import commentRoutes from './routes/comment.routes';
-import uploadRoutes from './routes/upload.routes';
-import authRoutes from './routes/auth.routes';
-import userRoutes from './routes/user.routes';
+import productRoutes from './routes/product.router';
+import articleRoutes from './routes/article.router';
+import commentRoutes from './routes/comment.router';
+import uploadRoutes from './routes/upload.router';
+import authRoutes from './routes/auth.router';
+import userRoutes from './routes/user.router';
+import notificationRoutes from './routes/notification.router';
 
 import { errorHandler } from './utils/errorHandler';
+import { authenticate } from './middlewares/auth';
 
 const app = express();
 
@@ -28,6 +30,8 @@ app.use('/articles', articleRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use(commentRoutes);              // 댓글 라우터 (경로 포함되어 있음)
+app.use(notificationRoutes); // 알림 라우터
+app.use('/notifications', authenticate, notificationRoutes);
 
 // 공통 에러 핸들러
 app.use(errorHandler);

@@ -26,10 +26,14 @@ interface LoginRequestBody {
   password: string;
 }
 
-// 공통 유효성 검사 미들웨어
+// 공통 유효성 검사 미들웨어 
 function checkCredentials(req: Request, res: Response, next: NextFunction) {
-  const { email, password, nickname }: RegisterRequestBody = req.body;
-  if (!email || !password || (req.path === '/register' && !nickname)) {
+  if (req.method !== 'POST') return next();
+  const body = (req.body ?? {}) as Partial<RegisterRequestBody & LoginRequestBody>;
+  const { email, password, nickname } = body;
+  const isRegister = req.path === '/register' || req.originalUrl.endsWith('/register');
+
+  if (!email || !password || (isRegister && !nickname)) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
   next();
@@ -38,27 +42,33 @@ function checkCredentials(req: Request, res: Response, next: NextFunction) {
 // 회원가입
 router.post('/register', checkCredentials, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, nickname, password, image }: RegisterRequestBody = req.body;
+    const { email, nickname, password, image } = req.body as RegisterRequestBody;
+
     const hashed = await bcrypt.hash(password, 12);
 
+    const data: Prisma.UserCreateInput = {
+      email,
+      nickname,
+      password: hashed,
+    };
+    if (typeof image === 'string' && image.trim() !== '') {
+      data.image = image.trim();
+    }
+
     const user = await prisma.user.create({
-      data: {
-        email,
-        nickname,
-        password: hashed,
-        image: image ?? null,
-      },
+      data,
       select: { id: true, email: true, nickname: true },
     });
 
     return res.status(201).json(user);
-  } catch (err) {
-    const e = err as Prisma.PrismaClientKnownRequestError;
-    if (
-      e.code === 'P2002' ||
-      (e.meta && typeof e.meta === 'object' && 'target' in e.meta && (e.meta.target as string[]).includes('email'))
-    ) {
+  } catch (err: any) {
+
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       return res.status(409).json({ message: 'Email or nickname already exists' });
+    }
+    
+    if (err instanceof Prisma.PrismaClientValidationError) {
+      return res.status(400).json({ message: 'Validation failed', detail: err.message });
     }
     next(err);
   }
