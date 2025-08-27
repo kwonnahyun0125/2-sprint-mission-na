@@ -24,15 +24,16 @@ export const createArticle = async (req: Request, res: Response, next: NextFunct
 // 게시글 단건 조회
 export const getArticleById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = parseInt(req.params.id);
-    const currentUserId = req.user?.id;
-
-    const article = await ArticleService.getArticleById(id, currentUserId);
-    if (article === null || article === undefined) {
-      return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: 'Invalid article id' });
     }
 
-    res.status(200).json(article);
+    const currentUserId = req.user?.id;
+    const article = await ArticleService.getArticleById(id, currentUserId);
+    if (!article) return res.status(404).json({ message: '게시글을 찾을 수 없습니다.' });
+
+    return res.status(200).json(article);
   } catch (err) {
     next(err);
   }
