@@ -9,13 +9,7 @@ const router = Router();
 
 router.use(authenticate);
 
-// 인증 미들웨어
-router.use((req: any, res, next) => {
-  if (!req.user?.id) return res.status(401).json({ message: 'Unauthorized' });
-  next();
-});
-
-// 알림림
+// 알림
 router.get('/notifications', async (req: AuthedRequest, res) => {
   const userId = req.user!.id;
   const page = Number(req.query.page || 1);
