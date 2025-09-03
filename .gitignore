@@ -6,6 +6,13 @@ prisma/migrations/
 generated/prisma
 uploads/
 
+# 민감 키/바이너리 파일
+*.pem
+*.zip
+*.key
+*.crt
+aws/
+
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
 
