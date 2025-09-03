@@ -5,6 +5,9 @@ node_modules
 prisma/migrations/
 generated/prisma
 uploads/
+*.pem
+awscliv2.zip
+multer-s3
 
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
