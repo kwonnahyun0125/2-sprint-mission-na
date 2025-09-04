@@ -15,11 +15,11 @@ multer-s3
 2-sprint-mission.git/
 
 # --- Prisma ---
-# 마이그레이션 폴더는 무시 (팀 정책에 맞게 조정 가능)
-prisma/migrations/
-generated/prisma
-# 스키마는 반드시 포함
-!prisma/schema.prisma
+# !prisma/
+# !prisma/**
+# prisma/migrations/
+# prisma/migrations/**
+# generated/prisma
 
 # --- Node 기본 템플릿(.toptal) ---
 # Logs
