@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+
 import uploadRouter from './routes/upload.router';
 
 const app = express();
@@ -12,6 +13,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 
 // 업로드 API
 app.use('/api', uploadRouter);
+
 
 // 공통 에러 핸들러
 app.use(
