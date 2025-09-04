@@ -11,6 +11,9 @@ app.use(express.json());
 // 헬스체크
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
+// 루트
+app.get('/', (_, res) => res.status(200).send({ message: 'Hello World!' }));
+
 // 업로드 API
 app.use('/api', uploadRouter);
 
