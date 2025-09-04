@@ -8,6 +8,11 @@ uploads/
 *.pem
 awscliv2.zip
 multer-s3
+*.jar
+*.backup
+*.sample
+*.txt
+2-sprint-mission.git/
 
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node

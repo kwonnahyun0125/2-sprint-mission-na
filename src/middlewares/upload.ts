@@ -2,7 +2,7 @@ import multer from 'multer';
 import multerS3 from 'multer-s3';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import s3 from '../config/s3';
+import { s3 } from '../config/s3';
 
 /** 허용할 MIME 타입 (원하면 추가) */
 const ALLOWED_MIMES = new Set([

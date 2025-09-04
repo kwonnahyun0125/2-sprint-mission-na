@@ -28,3 +28,5 @@ export function getPublicUrl(key: string) {
   if (AWS_S3_PUBLIC_BASE) return `${AWS_S3_PUBLIC_BASE}/${key}`;
   return `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${key}`;
 }
+
+export const s3 = s3Client;
