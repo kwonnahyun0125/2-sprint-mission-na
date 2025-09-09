@@ -5,23 +5,18 @@ node_modules
 .env.test
 # 산출물/업로드/예시/백업
 uploads/
+
+# 민감 키/바이너리 파일
 *.pem
-awscliv2.zip
-multer-s3
-*.jar
-*.backup
-*.sample
-*.txt
-2-sprint-mission.git/
+*.zip
+*.key
+*.crt
+aws/
 
-# --- Prisma ---
-# !prisma/
-# !prisma/**
-# prisma/migrations/
-# prisma/migrations/**
-# generated/prisma
+# Created by https://www.toptal.com/developers/gitignore/api/node
+# Edit at https://www.toptal.com/developers/gitignore?templates=node
 
-# --- Node 기본 템플릿(.toptal) ---
+### Node ###
 # Logs
 logs
 *.log
