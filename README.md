@@ -1,5 +1,3 @@
-스프린트미션11
-
 ## 1. 목표
 
    - [x] Github Actions로 테스트, 배포 자동화
@@ -25,3 +23,4 @@
 
    - Github actions는 .github/workflows/ 폴더에 저장해서 제출합니다.
    - Docker 관련 파일들은 프로젝트 폴더 최상위에 저장합니다.
+
