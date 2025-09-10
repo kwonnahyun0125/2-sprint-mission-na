@@ -13,6 +13,7 @@ multer-s3
 *.sample
 *.txt
 2-sprint-mission.git/
+pandamarket-key2.pem:Zone.Identifier
 
 # --- Prisma ---
 # !prisma/
