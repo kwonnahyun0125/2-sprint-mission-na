@@ -10,27 +10,27 @@ import {
   getArticleLikes,
 } from '../controllers/article.controller';
 import { validateArticle } from '../middlewares/validation';
-import { authenticate } from '../middlewares/auth';
+import { authenticate, optionalAuthenticate } from '../middlewares/auth';
 import { requireOwnership } from '../middlewares/ownership';
 
 const router: express.Router = express.Router();
 
-// 게시글 목록 조회, 생성
-router.route('/')
-  .get(getArticleList)
-  .post(authenticate, validateArticle, createArticle);
+router.get('/', getArticleList);
+router.get('/:id', optionalAuthenticate, getArticleById);
+// 좋아요 사용자 목록
+router.get('/:articleId/likes', getArticleLikes);
 
-// 게시글 상세 조회, 수정, 삭제
-router.route('/:id')
-  .get(authenticate, getArticleById)
-  .patch(authenticate, requireOwnership('article'), updateArticle)
-  .delete(authenticate, requireOwnership('article'), deleteArticle);
+router.use(authenticate);
 
-// 좋아요 / 좋아요 취소
-router.post('/:id/like', authenticate, likeArticle);
-router.delete('/:id/like', authenticate, unlikeArticle);
+// 생성
+router.post('/', validateArticle, createArticle);
 
-// 게시글 좋아요 목록 조회
-router.get('/:id/likes', authenticate, getArticleLikes);
+// 수정/삭제(작성자만)
+router.patch('/:id', requireOwnership('article'), updateArticle);
+router.delete('/:id', requireOwnership('article'), deleteArticle);
+
+// 좋아요/취소
+router.post('/:id/like', likeArticle);
+router.delete('/:id/like', unlikeArticle);
 
 export default router;

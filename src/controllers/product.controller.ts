@@ -104,8 +104,16 @@ export const unlikeProduct = async (req: Request, res: Response, next: NextFunct
 // 상품 좋아요 유저 목록
 export const getProductLikes = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const users = await ProductService.getProductLikes(parseInt(req.params.productId));
-    res.status(200).json(users);
+    // :productId 우선, 없으면 :id 도 허용 (라우터 실수 대비)
+    const pidRaw = req.params.productId ?? req.params.id;
+    const productId = Number(pidRaw);
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+      return res.status(400).json({ message: 'Invalid product id' });
+    }
+
+    const users = await ProductService.getProductLikes(productId);
+    return res.status(200).json(users);
   } catch (err) {
     next(err);
   }

@@ -1,18 +1,17 @@
+// src/routes/user.router.ts
 import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { authenticate } from '../middlewares/auth';
 
 const prisma = new PrismaClient();
-const router: express.Router = express.Router();
+const router = express.Router();
 
-interface AuthenticatedRequest extends Request {
-  user: { id: number };
-}
-
-// 1. 내 정보 조회
-router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 1) 내 정보 조회
+router.get('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: {
@@ -22,7 +21,7 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response,
         image: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
@@ -31,10 +30,12 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response,
   }
 });
 
-// 2. 내 정보 수정
-router.patch('/me', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 2) 내 정보 수정
+router.patch('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { nickname, image } = req.body;
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { nickname, image } = req.body as { nickname?: string; image?: string };
     const data: { nickname?: string; image?: string } = {};
     if (nickname !== undefined) data.nickname = nickname;
     if (image !== undefined) data.image = image;
@@ -49,7 +50,7 @@ router.patch('/me', authenticate, async (req: AuthenticatedRequest, res: Respons
         image: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
     res.json(updated);
   } catch (err) {
@@ -61,10 +62,13 @@ router.patch('/me', authenticate, async (req: AuthenticatedRequest, res: Respons
   }
 });
 
-// 3. 비밀번호 변경
-router.patch('/me/password', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 3) 비밀번호 변경
+router.patch('/me/password', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { oldPassword, newPassword } = req.body;
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { oldPassword, newPassword } = req.body as { oldPassword: string; newPassword: string };
+
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -74,7 +78,7 @@ router.patch('/me/password', authenticate, async (req: AuthenticatedRequest, res
     const hashed = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { password: hashed }
+      data: { password: hashed },
     });
     res.json({ message: '비밀번호가 변경되었습니다.' });
   } catch (err) {
@@ -82,9 +86,11 @@ router.patch('/me/password', authenticate, async (req: AuthenticatedRequest, res
   }
 });
 
-// 4. 내가 등록한 상품 목록
-router.get('/me/products', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 4) 내가 등록한 상품 목록
+router.get('/me/products', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     const products = await prisma.product.findMany({
       where: { ownerId: req.user.id },
       select: {
@@ -96,7 +102,7 @@ router.get('/me/products', authenticate, async (req: AuthenticatedRequest, res: 
         imageUrl: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
     res.json(products);
   } catch (err) {
@@ -104,9 +110,11 @@ router.get('/me/products', authenticate, async (req: AuthenticatedRequest, res: 
   }
 });
 
-// 5. 내가 등록한 게시글 목록
-router.get('/me/articles', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 5) 내가 등록한 게시글 목록
+router.get('/me/articles', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     const articles = await prisma.article.findMany({
       where: { authorId: req.user.id },
       select: {
@@ -115,7 +123,7 @@ router.get('/me/articles', authenticate, async (req: AuthenticatedRequest, res: 
         content: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
     res.json(articles);
   } catch (err) {
@@ -123,13 +131,23 @@ router.get('/me/articles', authenticate, async (req: AuthenticatedRequest, res: 
   }
 });
 
-// 6. 내가 좋아요한 상품 목록
-router.get('/me/liked-products', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 6) 내가 좋아요한 상품 목록
+router.get('/me/liked-products', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     const products = await prisma.product.findMany({
-      where: {
-        likes: { some: { userId: req.user.id } }
-      }
+      where: { likes: { some: { userId: req.user.id } } },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        tags: true,
+        imageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     res.json(products);
   } catch (err) {
@@ -137,20 +155,20 @@ router.get('/me/liked-products', authenticate, async (req: AuthenticatedRequest,
   }
 });
 
-// 7. 내가 좋아요한 게시글 목록
-router.get('/me/liked-articles', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// 7) 내가 좋아요한 게시글 목록
+router.get('/me/liked-articles', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
     const articles = await prisma.article.findMany({
-      where: {
-        likes: { some: { userId: req.user.id } }
-      },
+      where: { likes: { some: { userId: req.user.id } } },
       select: {
         id: true,
         title: true,
         content: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
     res.json(articles);
   } catch (err) {

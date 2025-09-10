@@ -1,39 +1,50 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-import productRoutes from './routes/product.router';
-import articleRoutes from './routes/article.router';
-import commentRoutes from './routes/comment.router';
-import uploadRoutes from './routes/upload.router';
-import authRoutes from './routes/auth.router';
-import userRoutes from './routes/user.router';
-import notificationRoutes from './routes/notification.router';
 
-import { errorHandler } from './utils/errorHandler';
-import { authenticate } from './middlewares/auth';
+import uploadRouter from './routes/upload.router';
+import authRouter from './routes/auth.router';
+import articleRouter from './routes/article.router';
+import productRouter from './routes/product.router';
+import commentRouter from './routes/comment.router';           
+import userRouter from './routes/user.router';                 
+import notificationRouter from './routes/notification.router'; 
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser()); 
 
 // 헬스체크
-app.get('/', (_: Request, res: Response) => res.send('서버 OK'));
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
-// 주요 라우터
-app.use('/auth', authRoutes);        // 인증 API
-app.use('/users', userRoutes);
-app.use('/products', productRoutes);
-app.use('/articles', articleRoutes);
-app.use('/upload', uploadRoutes);
-app.use('/uploads', express.static('uploads'));
-app.use(commentRoutes);              // 댓글 라우터 (경로 포함되어 있음)
-app.use(notificationRoutes); // 알림 라우터
-app.use('/notifications', authenticate, notificationRoutes);
+// 루트
+app.get('/', (_req, res) => res.status(200).send({ message: 'Hello World!' }));
+
+// 테스트가 기대하는 루트 경로에 직접 마운트
+app.use('/auth', authRouter);
+app.use('/articles', articleRouter);
+app.use('/products', productRouter);
+
+// 선택 라우터
+app.use('/comments', commentRouter);
+app.use('/users', userRouter);
+app.use('/notifications', notificationRouter);
+
+// 업로드 API 
+app.use('/api', uploadRouter);
+
+// 404 핸들러(라우터 뒤)
+app.use((req, res) => res.status(404).json({ ok: false, message: 'Not Found' }));
 
 // 공통 에러 핸들러
-app.use(errorHandler);
+app.use(
+  (err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error(err);
+    res.status(500).json({ ok: false, message: err?.message ?? 'Server Error' });
+  }
+);
 
 export default app;
